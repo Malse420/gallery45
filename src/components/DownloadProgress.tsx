@@ -31,11 +31,11 @@ const DownloadProgress = () => {
 
   return (
     <div
-      className={`fixed bottom-0 right-0 left-0 transition-all duration-300 ease-in-out bg-background border-t border-border shadow-lg ${
-        isExpanded ? "h-[50vh]" : "h-12"
+      className={`fixed bottom-0 right-0 left-0 transition-all duration-300 ease-in-out bg-background/50 backdrop-blur-sm border-t border-border shadow-lg ${
+        isExpanded ? "h-[50vh]" : "h-14"
       }`}
     >
-      <div className="container mx-auto">
+      <div className="container mx-auto relative">
         <Button
           variant="ghost"
           size="sm"
@@ -46,12 +46,16 @@ const DownloadProgress = () => {
         </Button>
 
         <Tabs defaultValue="active" className="w-full h-full">
-          <TabsList className="h-12 w-full grid grid-cols-2">
-            <TabsTrigger value="active">Active Downloads</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsList className="h-14 w-full grid grid-cols-2">
+            <TabsTrigger value="active">
+              Active Downloads ({downloads.filter(d => d.status === "downloading").length})
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              Completed ({downloads.filter(d => d.status === "completed").length})
+            </TabsTrigger>
           </TabsList>
 
-          <div className={`overflow-auto ${isExpanded ? "h-[calc(50vh-3rem)]" : "h-0"}`}>
+          <div className={`overflow-auto ${isExpanded ? "h-[calc(50vh-3.5rem)]" : "h-0"}`}>
             <TabsContent value="active" className="p-4 space-y-2">
               {downloads
                 .filter((d) => d.status === "downloading")
