@@ -1,11 +1,14 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Video, Image } from "lucide-react";
 
 interface SearchResult {
   id: string;
   title: string;
   url: string;
   thumbnailUrl?: string;
+  videoCount: number;
+  imageCount: number;
 }
 
 interface SearchResultsProps {
@@ -49,12 +52,22 @@ const SearchResults = ({ results, isLoading = false }: SearchResultsProps) => {
                 className="w-full h-40 object-cover rounded-md mb-2"
               />
             )}
-            <h3 className="font-medium text-sm line-clamp-2">{result.title}</h3>
+            <h3 className="font-medium text-sm line-clamp-2 mb-2">{result.title}</h3>
+            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+              <div className="flex items-center gap-1">
+                <Video className="h-4 w-4" />
+                <span>{result.videoCount}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Image className="h-4 w-4" />
+                <span>{result.imageCount}</span>
+              </div>
+            </div>
             <a
               href={result.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-500 hover:underline mt-1 block"
+              className="text-xs text-blue-500 hover:underline block"
             >
               View Gallery
             </a>

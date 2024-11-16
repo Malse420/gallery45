@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import GalleryGrid from "@/components/GalleryGrid";
 import SearchResults from "@/components/SearchResults";
-import DownloadProgress from "@/components/DownloadProgress";
+import FilterSort, { FilterSortOptions } from "@/components/FilterSort";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [galleries, setGalleries] = useState([]);
+  const [filterSortOptions, setFilterSortOptions] = useState<FilterSortOptions>({
+    sortBy: "date",
+  });
   const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -25,8 +28,14 @@ const Index = () => {
 
     setIsSearching(true);
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/search?term=${encodeURIComponent(searchTerm)}`);
+      // TODO: Replace with actual API call that includes filter/sort params
+      const response = await fetch(
+        `/api/search?term=${encodeURIComponent(searchTerm)}&maxVideos=${
+          filterSortOptions.maxVideos || ""
+        }&maxImages=${filterSortOptions.maxImages || ""}&sortBy=${
+          filterSortOptions.sortBy
+        }`
+      );
       const data = await response.json();
       setGalleries(data.galleries);
     } catch (error) {
@@ -45,26 +54,32 @@ const Index = () => {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-4xl font-bold text-[#2C3E50] mb-6">Gallery Manager</h1>
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="Search galleries..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
+          <form onSubmit={handleSearch} className="space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="Search galleries..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <Button type="submit" disabled={isSearching}>
+                {isSearching ? (
+                  "Searching..."
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Search
+                  </>
+                )}
+              </Button>
             </div>
-            <Button type="submit" disabled={isSearching}>
-              {isSearching ? (
-                "Searching..."
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Search
-                </>
-              )}
-            </Button>
+            <FilterSort
+              options={filterSortOptions}
+              onChange={setFilterSortOptions}
+            />
           </form>
         </div>
       </header>
