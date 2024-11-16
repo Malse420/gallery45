@@ -69,3 +69,21 @@ export const fetchGalleryDetails = async (galleryId: string) => {
     images
   };
 };
+
+export const scrapeGallery = async (url: string) => {
+  const response = await fetch('https://mbkvzgohhfodxfubejgd.supabase.co/functions/v1/scrape-gallery', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+    },
+    body: JSON.stringify({ url })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to scrape gallery');
+  }
+
+  return response.json();
+};
