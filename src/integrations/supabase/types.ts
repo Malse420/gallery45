@@ -9,7 +9,175 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cached_galleries: {
+        Row: {
+          average_image_height: number | null
+          average_image_size_bytes: number | null
+          average_image_width: number | null
+          average_video_duration: number | null
+          average_video_size_bytes: number | null
+          content: string | null
+          created_at: string | null
+          external_gallery_id: string
+          id: string
+          image_count: number | null
+          last_fetched: string | null
+          max_image_height: number | null
+          max_image_width: number | null
+          min_image_height: number | null
+          min_image_width: number | null
+          thumbnail_url: string | null
+          title: string | null
+          total_duration: number | null
+          total_size_bytes: number | null
+          url: string
+          video_count: number | null
+        }
+        Insert: {
+          average_image_height?: number | null
+          average_image_size_bytes?: number | null
+          average_image_width?: number | null
+          average_video_duration?: number | null
+          average_video_size_bytes?: number | null
+          content?: string | null
+          created_at?: string | null
+          external_gallery_id: string
+          id?: string
+          image_count?: number | null
+          last_fetched?: string | null
+          max_image_height?: number | null
+          max_image_width?: number | null
+          min_image_height?: number | null
+          min_image_width?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          total_duration?: number | null
+          total_size_bytes?: number | null
+          url: string
+          video_count?: number | null
+        }
+        Update: {
+          average_image_height?: number | null
+          average_image_size_bytes?: number | null
+          average_image_width?: number | null
+          average_video_duration?: number | null
+          average_video_size_bytes?: number | null
+          content?: string | null
+          created_at?: string | null
+          external_gallery_id?: string
+          id?: string
+          image_count?: number | null
+          last_fetched?: string | null
+          max_image_height?: number | null
+          max_image_width?: number | null
+          min_image_height?: number | null
+          min_image_width?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          total_duration?: number | null
+          total_size_bytes?: number | null
+          url?: string
+          video_count?: number | null
+        }
+        Relationships: []
+      }
+      cached_images: {
+        Row: {
+          created_at: string | null
+          external_image_id: string
+          gallery_id: string | null
+          height: number | null
+          id: string
+          size_bytes: number | null
+          thumbnail_url: string | null
+          title: string | null
+          url: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          external_image_id: string
+          gallery_id?: string | null
+          height?: number | null
+          id?: string
+          size_bytes?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          url: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          external_image_id?: string
+          gallery_id?: string | null
+          height?: number | null
+          id?: string
+          size_bytes?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cached_images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "cached_galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cached_videos: {
+        Row: {
+          created_at: string | null
+          duration: number | null
+          external_video_id: string
+          gallery_id: string | null
+          height: number | null
+          id: string
+          size_bytes: number | null
+          thumbnail_url: string | null
+          title: string | null
+          url: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration?: number | null
+          external_video_id: string
+          gallery_id?: string | null
+          height?: number | null
+          id?: string
+          size_bytes?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          url: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number | null
+          external_video_id?: string
+          gallery_id?: string | null
+          height?: number | null
+          id?: string
+          size_bytes?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cached_videos_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "cached_galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
