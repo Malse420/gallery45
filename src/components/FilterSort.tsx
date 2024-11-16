@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 
 export interface FilterSortOptions {
   maxVideos?: number;
+  minVideos?: number;
   maxImages?: number;
+  minImages?: number;
   minDuration?: number;
   maxDuration?: number;
   minFileSize?: number;
@@ -84,6 +86,17 @@ const FilterSort = ({ options, onChange, type }: FilterSortProps) => {
             {type === "galleries" && (
               <>
                 <div className="space-y-2">
+                  <Label htmlFor="minVideos">Minimum Videos</Label>
+                  <Input
+                    id="minVideos"
+                    type="number"
+                    min="0"
+                    value={options.minVideos || ""}
+                    onChange={(e) => handleInputChange("minVideos", e.target.value)}
+                    placeholder="No minimum"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="maxVideos">Maximum Videos</Label>
                   <Input
                     id="maxVideos"
@@ -92,6 +105,17 @@ const FilterSort = ({ options, onChange, type }: FilterSortProps) => {
                     value={options.maxVideos || ""}
                     onChange={(e) => handleInputChange("maxVideos", e.target.value)}
                     placeholder="No limit"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minImages">Minimum Images</Label>
+                  <Input
+                    id="minImages"
+                    type="number"
+                    min="0"
+                    value={options.minImages || ""}
+                    onChange={(e) => handleInputChange("minImages", e.target.value)}
+                    placeholder="No minimum"
                   />
                 </div>
                 <div className="space-y-2">
