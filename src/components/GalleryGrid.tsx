@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { Download, Check, Expand } from "lucide-react";
+import { useState } from "react";
+import { Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { useInView } from "react-intersection-observer";
 
@@ -27,37 +26,15 @@ const GalleryItem = ({ gallery }: { gallery: Gallery }) => {
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (inView && !previewUrl) {
-      // In a real implementation, fetch preview from API
-      fetch(`/api/content/${gallery.id}/preview`)
-        .then(res => res.json())
-        .then(data => setPreviewUrl(data.previewUrl))
-        .catch(console.error);
-    }
-  }, [inView, gallery.id, previewUrl]);
 
   return (
     <Card className="bg-white rounded-lg shadow-md overflow-hidden">
       <div ref={ref} className="relative aspect-video">
-        {previewUrl ? (
-          <video
-            src={previewUrl}
-            className="w-full h-full object-cover"
-            loop
-            muted
-            autoPlay
-            playsInline
-          />
-        ) : (
-          <img
-            src={gallery.thumbnail}
-            alt={gallery.title}
-            className="w-full h-full object-cover"
-          />
-        )}
+        <img
+          src={gallery.thumbnail}
+          alt={gallery.title}
+          className="w-full h-full object-cover"
+        />
         <Button
           variant="ghost"
           size="icon"
