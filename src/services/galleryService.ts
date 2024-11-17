@@ -7,37 +7,54 @@ export interface GalleryFilters {
   maxImages?: number;
   minDuration?: number;
   maxDuration?: number;
+  searchTerm?: string;
+  page?: number;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export const fetchGalleries = async (filters: GalleryFilters = {}) => {
+  const { page = 1, ...restFilters } = filters;
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE - 1;
+
   let query = supabase
     .from('cached_galleries')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(start, end);
 
-  if (filters.minVideos) {
-    query = query.gte('video_count', filters.minVideos);
+  if (restFilters.minVideos) {
+    query = query.gte('video_count', restFilters.minVideos);
   }
-  if (filters.maxVideos) {
-    query = query.lte('video_count', filters.maxVideos);
+  if (restFilters.maxVideos) {
+    query = query.lte('video_count', restFilters.maxVideos);
   }
-  if (filters.minImages) {
-    query = query.gte('image_count', filters.minImages);
+  if (restFilters.minImages) {
+    query = query.gte('image_count', restFilters.minImages);
   }
-  if (filters.maxImages) {
-    query = query.lte('image_count', filters.maxImages);
+  if (restFilters.maxImages) {
+    query = query.lte('image_count', restFilters.maxImages);
   }
-  if (filters.minDuration) {
-    query = query.gte('total_duration', filters.minDuration);
+  if (restFilters.minDuration) {
+    query = query.gte('total_duration', restFilters.minDuration);
   }
-  if (filters.maxDuration) {
-    query = query.lte('total_duration', filters.maxDuration);
+  if (restFilters.maxDuration) {
+    query = query.lte('total_duration', restFilters.maxDuration);
+  }
+  if (restFilters.searchTerm) {
+    query = query.ilike('title', `%${restFilters.searchTerm}%`);
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   
   if (error) throw error;
-  return data;
+  
+  return {
+    data,
+    pageCount: Math.ceil((count || 0) / ITEMS_PER_PAGE),
+    hasMore: (count || 0) > (page * ITEMS_PER_PAGE)
+  };
 };
 
 export const fetchGalleryDetails = async (galleryId: string) => {
