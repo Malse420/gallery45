@@ -7,6 +7,7 @@ import Statistics from "@/components/Statistics";
 import { FilterSortOptions } from "@/components/FilterSort";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { debounce } from "lodash";
+import GalleryExtractor from "@/components/GalleryExtractor";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
