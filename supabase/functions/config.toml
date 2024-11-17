@@ -1,7 +1,10 @@
 project_id = "mbkvzgohhfodxfubejgd"
 
-[functions.cleanup-search-results]
-verify_jwt = false
+[global.env]
+SUPABASE_URL = "env(SUPABASE_URL)"
+SUPABASE_ANON_KEY = "env(SUPABASE_ANON_KEY)"
+SUPABASE_SERVICE_ROLE_KEY = "env(SUPABASE_SERVICE_ROLE_KEY)"
 
-[functions.progress]
+[[functions]]
+name = "search-content"
 verify_jwt = false
