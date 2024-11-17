@@ -9,10 +9,13 @@ export const useSearch = (query: string) => {
         return { results: [] };
       }
 
+      // Get the session synchronously first
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('search-galleries', {
         body: { query: query.trim() },
         headers: {
-          Authorization: `Bearer ${supabase.auth.getSession()?.access_token}`
+          Authorization: `Bearer ${session?.access_token}`
         }
       });
 
