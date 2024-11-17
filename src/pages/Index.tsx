@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { Search, MoonIcon, SunIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import TabResults from "@/components/TabResults";
+import Statistics from "@/components/Statistics";
 import { FilterSortOptions } from "@/components/FilterSort";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchGalleries, GalleryFilters } from "@/services/galleryService";
@@ -16,7 +16,6 @@ const Index = () => {
   const [filters, setFilters] = useState<GalleryFilters>({});
   const [searchHistory, setSearchHistory] = useLocalStorage<string[]>("searchHistory", []);
   const [isDarkMode, setIsDarkMode] = useLocalStorage<boolean>("darkMode", false);
-  const { toast } = useToast();
   const { ref, inView } = useInView();
 
   const { 
@@ -127,22 +126,17 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <TabResults
-          searchTerm={searchTerm}
-          isSearching={isLoading}
-          onSearch={(type, options) => {
-            const newFilters: GalleryFilters = {
-              minVideos: options.minVideos,
-              maxVideos: options.maxVideos,
-              minImages: options.maxImages,
-              maxImages: options.maxImages,
-              minDuration: options.minDuration,
-              maxDuration: options.maxDuration,
-            };
-            setFilters(newFilters);
-          }}
-          galleries={galleries}
-        />
+        <Statistics />
+        <div className="mt-8">
+          <TabResults
+            searchTerm={searchTerm}
+            isSearching={isLoading}
+            onSearch={(type, options) => {
+              setFilters(prev => ({ ...prev, ...options }));
+            }}
+            galleries={galleries}
+          />
+        </div>
         {!isLoading && hasNextPage && (
           <div ref={ref} className="h-10" />
         )}
