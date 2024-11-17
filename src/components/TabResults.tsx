@@ -12,7 +12,10 @@ interface TabResultsProps {
   onSearch: (type: string, options: FilterSortOptions) => void;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResultsProps) => {
+  const [currentPage, setCurrentPage] = useState(1);
   const [filterOptions, setFilterOptions] = useState<Record<string, FilterSortOptions>>({
     galleries: { sortBy: "date" },
     videos: { sortBy: "date" },
@@ -20,12 +23,16 @@ const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResults
   });
 
   const { data: searchResults } = useQuery({
-    queryKey: ['search', searchTerm, filterOptions.galleries],
+    queryKey: ['search', searchTerm, filterOptions.galleries, currentPage],
     queryFn: async () => {
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE - 1;
+
       let query = supabase
         .from('cached_galleries')
-        .select('*');
+        .select('*', { count: 'exact' });
 
+      // Apply search term
       if (searchTerm) {
         query = query.ilike('title', `%${searchTerm}%`);
       }
@@ -62,19 +69,82 @@ const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResults
           query = query.order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query;
+      // Apply pagination
+      query = query.range(start, end);
+
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data || [];
+
+      return {
+        data: data || [],
+        totalCount: count || 0,
+        hasMore: count ? count > (end + 1) : false
+      };
+    },
+    enabled: true,
+  });
+
+  const { data: videoResults } = useQuery({
+    queryKey: ['videos', searchTerm, filterOptions.videos, currentPage],
+    queryFn: async () => {
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE - 1;
+
+      let query = supabase
+        .from('cached_videos')
+        .select('*', { count: 'exact' });
+
+      if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
+      }
+
+      query = query.range(start, end);
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      return {
+        data: data || [],
+        totalCount: count || 0,
+        hasMore: count ? count > (end + 1) : false
+      };
+    },
+    enabled: true,
+  });
+
+  const { data: imageResults } = useQuery({
+    queryKey: ['images', searchTerm, filterOptions.images, currentPage],
+    queryFn: async () => {
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE - 1;
+
+      let query = supabase
+        .from('cached_images')
+        .select('*', { count: 'exact' });
+
+      if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
+      }
+
+      query = query.range(start, end);
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      return {
+        data: data || [],
+        totalCount: count || 0,
+        hasMore: count ? count > (end + 1) : false
+      };
     },
     enabled: true,
   });
 
   const handleFilterChange = (type: string, options: FilterSortOptions) => {
     setFilterOptions((prev) => ({ ...prev, [type]: options }));
+    setCurrentPage(1); // Reset to first page when filters change
     onSearch(type, options);
   };
 
-  const formattedResults = (searchResults || []).map(gallery => ({
+  const formattedGalleryResults = (searchResults?.data || []).map(gallery => ({
     id: gallery.id,
     title: gallery.title || 'Untitled Gallery',
     url: gallery.url,
@@ -86,9 +156,15 @@ const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResults
   return (
     <Tabs defaultValue="galleries" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="galleries">Galleries</TabsTrigger>
-        <TabsTrigger value="videos">Videos</TabsTrigger>
-        <TabsTrigger value="images">Images</TabsTrigger>
+        <TabsTrigger value="galleries">
+          Galleries ({searchResults?.totalCount || 0})
+        </TabsTrigger>
+        <TabsTrigger value="videos">
+          Videos ({videoResults?.totalCount || 0})
+        </TabsTrigger>
+        <TabsTrigger value="images">
+          Images ({imageResults?.totalCount || 0})
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="galleries">
         <FilterSort
@@ -97,8 +173,10 @@ const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResults
           onChange={(options) => handleFilterChange("galleries", options)}
         />
         <SearchResults
-          results={formattedResults}
+          results={formattedGalleryResults}
           isLoading={isSearching}
+          hasMore={searchResults?.hasMore}
+          onLoadMore={() => setCurrentPage(prev => prev + 1)}
         />
       </TabsContent>
       <TabsContent value="videos">
@@ -108,8 +186,10 @@ const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResults
           onChange={(options) => handleFilterChange("videos", options)}
         />
         <SearchResults
-          results={[]}
+          results={videoResults?.data || []}
           isLoading={isSearching}
+          hasMore={videoResults?.hasMore}
+          onLoadMore={() => setCurrentPage(prev => prev + 1)}
         />
       </TabsContent>
       <TabsContent value="images">
@@ -119,8 +199,10 @@ const TabResults = ({ searchTerm, isSearching, galleries, onSearch }: TabResults
           onChange={(options) => handleFilterChange("images", options)}
         />
         <SearchResults
-          results={[]}
+          results={imageResults?.data || []}
           isLoading={isSearching}
+          hasMore={imageResults?.hasMore}
+          onLoadMore={() => setCurrentPage(prev => prev + 1)}
         />
       </TabsContent>
     </Tabs>
