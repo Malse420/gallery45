@@ -72,6 +72,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
+      <Statistics />
       <header className="bg-card shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
@@ -126,7 +127,6 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Statistics />
         <div className="mt-8">
           <TabResults
             searchTerm={searchTerm}
