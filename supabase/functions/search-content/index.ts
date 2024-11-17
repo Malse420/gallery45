@@ -27,21 +27,21 @@ const selectors = {
     link: 'a'
   },
   videos: {
-    container: '.ml-video-thumb',
-    title: '.ml-video-title',
-    uploader: '.ml-video-uploader', 
-    thumbnail: '.static',
-    duration: '.ml-video-duration',
-    views: '.ml-video-views',
-    link: 'a'
+    container: '.video-item',
+    link: 'a.video-link',
+    title: '.video-title',
+    thumbnail: 'img.video-thumb',
+    duration: '.duration',
+    views: '.views-count',
+    date: '.upload-date'
   },
   images: {
-    container: '.ml-image-thumb',
-    title: '.ml-image-title',
-    uploader: '.ml-image-uploader',
-    thumbnail: '.static',
-    views: '.ml-image-views',
-    link: 'a'
+    container: '.image-item',
+    link: 'a.image-link',
+    title: '.image-title',
+    thumbnail: 'img.image-thumb',
+    views: '.views-count',
+    date: '.upload-date'
   }
 };
 
@@ -95,7 +95,9 @@ serve(async (req) => {
       }
 
       const views = parseInt($el.find(typeSelectors.views || '').text().replace(/[^0-9]/g, '')) || undefined;
-      const uploadDate = $el.find(typeSelectors.uploader || '').text().trim() || undefined;
+      const uploadDate = type === 'galleries' 
+        ? $el.find(typeSelectors.uploader || '').text().trim() || undefined
+        : $el.find(typeSelectors.date || '').text().trim() || undefined;
 
       if (url && title) {
         results.push({
