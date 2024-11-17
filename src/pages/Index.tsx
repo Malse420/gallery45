@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, MoonIcon, SunIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,7 +10,6 @@ import { fetchGalleries, GalleryFilters } from "@/services/galleryService";
 import { useInView } from "react-intersection-observer";
 import debounce from "lodash/debounce";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { MoonIcon, SunIcon } from "lucide-react";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,24 +19,16 @@ const Index = () => {
   const { toast } = useToast();
   const { ref, inView } = useInView();
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
   const { 
     data, 
-    isLoading, 
-    fetchNextPage, 
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
     hasNextPage,
-    isFetchingNextPage 
   } = useInfiniteQuery({
     queryKey: ['galleries', filters],
     queryFn: ({ pageParam = 0 }) => fetchGalleries({ ...filters, pageParam }),
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? (lastPage.pageCount ?? 0) + 1 : undefined,
     initialPageParam: 0
   });
 
@@ -46,6 +37,14 @@ const Index = () => {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isLoading, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   const debouncedSearch = useCallback(
     debounce((term: string) => {

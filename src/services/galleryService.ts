@@ -50,9 +50,9 @@ export const fetchGalleries = async ({ pageParam = 0, ...filters }: GalleryFilte
   if (error) throw error;
   
   return {
-    data,
-    nextPage: (count || 0) > (end + 1) ? pageParam + 1 : undefined,
-    totalCount: count
+    data: data || [],
+    pageCount: pageParam,
+    hasMore: (count || 0) > (end + 1)
   };
 };
 
@@ -84,22 +84,4 @@ export const fetchGalleryDetails = async (galleryId: string) => {
     videos,
     images
   };
-};
-
-export const scrapeGallery = async (url: string) => {
-  const response = await fetch('https://mbkvzgohhfodxfubejgd.supabase.co/functions/v1/scrape-gallery', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
-    },
-    body: JSON.stringify({ url })
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to scrape gallery');
-  }
-
-  return response.json();
 };

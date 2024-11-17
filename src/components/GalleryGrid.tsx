@@ -32,12 +32,13 @@ const GalleryItem = ({ gallery }: { gallery: Gallery }) => {
     threshold: 0.1,
   });
 
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
   return (
     <>
-      <Card className="bg-card rounded-lg shadow-md overflow-hidden transition-transform duration-200 hover:scale-105">
+      <Card 
+        className="bg-card rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:scale-105 animate-fade-in"
+      >
         <div ref={ref} className="relative aspect-video">
           {inView && (
             <img
@@ -50,7 +51,7 @@ const GalleryItem = ({ gallery }: { gallery: Gallery }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => setShowPreview(true)}
           >
             <Expand className="h-4 w-4" />
@@ -62,22 +63,17 @@ const GalleryItem = ({ gallery }: { gallery: Gallery }) => {
             {gallery.title}
           </h3>
           
-          {isExpanded && (
-            <div className="mt-4 space-y-2 animate-accordion-down">
-              <p className="text-sm text-muted-foreground">{gallery.description}</p>
-              <div className="flex gap-4 text-sm text-muted-foreground">
-                {gallery.videoCount !== undefined && (
-                  <span>Videos: {gallery.videoCount}</span>
-                )}
-                {gallery.imageCount !== undefined && (
-                  <span>Images: {gallery.imageCount}</span>
-                )}
-                {gallery.duration !== undefined && (
-                  <span>Duration: {Math.floor(gallery.duration / 60)}m {gallery.duration % 60}s</span>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="flex gap-4 text-sm text-muted-foreground">
+            {gallery.videoCount !== undefined && (
+              <span>Videos: {gallery.videoCount}</span>
+            )}
+            {gallery.imageCount !== undefined && (
+              <span>Images: {gallery.imageCount}</span>
+            )}
+            {gallery.duration !== undefined && (
+              <span>Duration: {Math.floor(gallery.duration / 60)}m {gallery.duration % 60}s</span>
+            )}
+          </div>
         </div>
       </Card>
 
