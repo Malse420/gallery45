@@ -2,8 +2,9 @@ import { corsHeaders } from './parsers.ts';
 import { parseImages, parseVideos, parseMetadata } from './parsers.ts';
 import { insertGallery, insertImages, insertVideos } from './database.ts';
 import { GalleryData } from './types.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
