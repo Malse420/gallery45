@@ -178,6 +178,42 @@ export type Database = {
           },
         ]
       }
+      search_results: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_count: number | null
+          last_fetched: string | null
+          query: string
+          thumbnail_url: string | null
+          title: string | null
+          url: string
+          video_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_count?: number | null
+          last_fetched?: string | null
+          query: string
+          thumbnail_url?: string | null
+          title?: string | null
+          url: string
+          video_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_count?: number | null
+          last_fetched?: string | null
+          query?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          url?: string
+          video_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
