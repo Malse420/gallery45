@@ -19,29 +19,29 @@ interface SearchResult {
 
 const selectors = {
   galleries: {
-    container: '.gallery-item',
-    link: 'a.gallery-link',
-    title: '.gallery-title',
-    thumbnail: 'img.gallery-thumb',
-    count: '.media-count',
-    date: '.uploaded-date'
+    container: '.ml-gallery-thumb',
+    title: '.ml-galleries-title',
+    uploader: '.ml-galleries-uploader',
+    thumbnail: '.static',
+    counts: '.ml-galleries-info',
+    link: 'a'
   },
   videos: {
-    container: '.video-item',
-    link: 'a.video-link',
-    title: '.video-title',
-    thumbnail: 'img.video-thumb',
-    duration: '.duration',
-    views: '.views-count',
-    date: '.upload-date'
+    container: '.ml-video-thumb',
+    title: '.ml-video-title',
+    uploader: '.ml-video-uploader', 
+    thumbnail: '.static',
+    duration: '.ml-video-duration',
+    views: '.ml-video-views',
+    link: 'a'
   },
   images: {
-    container: '.image-item',
-    link: 'a.image-link',
-    title: '.image-title',
-    thumbnail: 'img.image-thumb',
-    views: '.views-count',
-    date: '.upload-date'
+    container: '.ml-image-thumb',
+    title: '.ml-image-title',
+    uploader: '.ml-image-uploader',
+    thumbnail: '.static',
+    views: '.ml-image-views',
+    link: 'a'
   }
 };
 
@@ -95,7 +95,7 @@ serve(async (req) => {
       }
 
       const views = parseInt($el.find(typeSelectors.views || '').text().replace(/[^0-9]/g, '')) || undefined;
-      const uploadDate = $el.find(typeSelectors.date || '').text().trim() || undefined;
+      const uploadDate = $el.find(typeSelectors.uploader || '').text().trim() || undefined;
 
       if (url && title) {
         results.push({
