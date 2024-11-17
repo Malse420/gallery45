@@ -116,13 +116,16 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mt-8">
-          <TabResults
-            searchTerm={searchTerm}
-            isSearching={isSearching}
-            onSearch={handleFilterSort}
-            galleries={[]}
-          />
+        <div className="space-y-8">
+          <GalleryExtractor />
+          <div className="mt-8">
+            <TabResults
+              searchTerm={searchTerm}
+              isSearching={isSearching}
+              onSearch={handleFilterSort}
+              galleries={[]}
+            />
+          </div>
         </div>
       </main>
     </div>
