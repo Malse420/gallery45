@@ -178,6 +178,33 @@ export type Database = {
           },
         ]
       }
+      download_progress: {
+        Row: {
+          created_at: string | null
+          filename: string
+          id: string
+          progress: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          filename: string
+          id?: string
+          progress?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          filename?: string
+          id?: string
+          progress?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       search_results: {
         Row: {
           created_at: string | null
@@ -219,6 +246,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_downloads: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_search_results: {
         Args: Record<PropertyKey, never>
         Returns: undefined
