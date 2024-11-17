@@ -17,6 +17,34 @@ interface SearchResult {
   uploadDate?: string;
 }
 
+const selectors = {
+  galleries: {
+    container: '.gallery-item',
+    link: 'a.gallery-link',
+    title: '.gallery-title',
+    thumbnail: 'img.gallery-thumb',
+    count: '.media-count',
+    date: '.uploaded-date'
+  },
+  videos: {
+    container: '.video-item',
+    link: 'a.video-link',
+    title: '.video-title',
+    thumbnail: 'img.video-thumb',
+    duration: '.duration',
+    views: '.views-count',
+    date: '.upload-date'
+  },
+  images: {
+    container: '.image-item',
+    link: 'a.image-link',
+    title: '.image-title',
+    thumbnail: 'img.image-thumb',
+    views: '.views-count',
+    date: '.upload-date'
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -31,7 +59,6 @@ serve(async (req) => {
 
     console.log(`Searching for ${type} with query:`, query);
 
-    // Construct search URL based on type
     const searchUrl = `https://motherless.com/search?q=${encodeURIComponent(query)}&t=${type}`;
     
     const response = await fetch(searchUrl, {
@@ -48,21 +75,27 @@ serve(async (req) => {
     const $ = load(html);
     const results: SearchResult[] = [];
 
-    // Different selectors based on content type
-    const selector = type === 'galleries' ? '.gallery-item' : '.thumb-container';
+    const typeSelectors = selectors[type as keyof typeof selectors];
 
-    $(selector).each((_, element) => {
+    $(typeSelectors.container).each((_, element) => {
       const $el = $(element);
-      const url = $el.find('a').first().attr('href') || '';
-      const title = $el.find('img').attr('alt') || $el.find('.title').text().trim();
-      const thumbnailUrl = $el.find('img').attr('src') || '';
+      const $link = $el.find(typeSelectors.link);
+      const url = $link.attr('href') || '';
+      const title = $el.find(typeSelectors.title).text().trim() || 
+                   $el.find(typeSelectors.thumbnail).attr('alt') || '';
+      const thumbnailUrl = $el.find(typeSelectors.thumbnail).attr('src') || '';
       
       let duration;
-      const durationText = $el.find('.duration').text().trim();
-      if (durationText) {
-        const [mins, secs] = durationText.split(':').map(Number);
-        duration = mins * 60 + secs;
+      if (type === 'videos' && typeSelectors.duration) {
+        const durationText = $el.find(typeSelectors.duration).text().trim();
+        if (durationText) {
+          const [mins, secs] = durationText.split(':').map(Number);
+          duration = mins * 60 + secs;
+        }
       }
+
+      const views = parseInt($el.find(typeSelectors.views || '').text().replace(/[^0-9]/g, '')) || undefined;
+      const uploadDate = $el.find(typeSelectors.date || '').text().trim() || undefined;
 
       if (url && title) {
         results.push({
@@ -71,8 +104,8 @@ serve(async (req) => {
           url: url.startsWith('http') ? url : `https://motherless.com${url}`,
           thumbnailUrl,
           duration,
-          views: parseInt($el.find('.views').text().replace(/[^0-9]/g, '')) || undefined,
-          uploadDate: $el.find('.uploaded').text().trim() || undefined
+          views,
+          uploadDate
         });
       }
     });
