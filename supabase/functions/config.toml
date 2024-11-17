@@ -1,0 +1,4 @@
+project_id = "mbkvzgohhfodxfubejgd"
+
+[functions.cleanup-search-results]
+verify_jwt = false
