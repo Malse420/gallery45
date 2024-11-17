@@ -5,37 +5,13 @@ import { Button } from "@/components/ui/button";
 import TabResults from "@/components/TabResults";
 import Statistics from "@/components/Statistics";
 import { FilterSortOptions } from "@/components/FilterSort";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { fetchGalleries, GalleryFilters } from "@/services/galleryService";
-import { useInView } from "react-intersection-observer";
-import debounce from "lodash/debounce";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<GalleryFilters>({});
+  const [isSearching, setIsSearching] = useState(false);
   const [searchHistory, setSearchHistory] = useLocalStorage<string[]>("searchHistory", []);
   const [isDarkMode, setIsDarkMode] = useLocalStorage<boolean>("darkMode", false);
-  const { ref, inView } = useInView();
-
-  const { 
-    data, 
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery({
-    queryKey: ['galleries', filters],
-    queryFn: ({ pageParam = 0 }) => fetchGalleries({ ...filters, pageParam }),
-    getNextPageParam: (lastPage) => lastPage.hasMore ? (lastPage.pageCount ?? 0) + 1 : undefined,
-    initialPageParam: 0
-  });
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isLoading && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isLoading, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -48,27 +24,31 @@ const Index = () => {
   const debouncedSearch = useCallback(
     debounce((term: string) => {
       if (term.trim()) {
-        setFilters(prev => ({ ...prev, searchTerm: term }));
         setSearchHistory(prev => {
           const newHistory = [term, ...prev.filter(h => h !== term)].slice(0, 5);
           return newHistory;
         });
       }
+      setIsSearching(false);
     }, 500),
     []
   );
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
+    setIsSearching(true);
     debouncedSearch(term);
   };
 
   const handleSearchHistoryClick = (term: string) => {
     setSearchTerm(term);
+    setIsSearching(true);
     debouncedSearch(term);
   };
 
-  const galleries = data?.pages.flatMap(page => page.data) ?? [];
+  const handleFilterSort = (type: string, options: FilterSortOptions) => {
+    // This is now handled within TabResults component
+  };
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
@@ -117,10 +97,10 @@ const Index = () => {
               </div>
               <Button 
                 type="submit" 
-                disabled={isLoading}
+                disabled={isSearching}
                 className="transition-all duration-200 hover:animate-scale-in"
               >
-                {isLoading ? (
+                {isSearching ? (
                   "Searching..."
                 ) : (
                   <>
@@ -138,16 +118,11 @@ const Index = () => {
         <div className="mt-8">
           <TabResults
             searchTerm={searchTerm}
-            isSearching={isLoading}
-            onSearch={(type, options) => {
-              setFilters(prev => ({ ...prev, ...options }));
-            }}
-            galleries={galleries}
+            isSearching={isSearching}
+            onSearch={handleFilterSort}
+            galleries={[]}
           />
         </div>
-        {!isLoading && hasNextPage && (
-          <div ref={ref} className="h-10" />
-        )}
       </main>
     </div>
   );
