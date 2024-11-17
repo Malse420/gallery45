@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Search, MoonIcon, SunIcon } from "lucide-react";
+import { Search, MoonIcon, SunIcon, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import TabResults from "@/components/TabResults";
@@ -75,13 +75,17 @@ const Index = () => {
       <Statistics />
       <header className="bg-card shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-4xl font-bold text-foreground">Gallery Search</h1>
+          <div className="flex flex-col items-center justify-center mb-4 relative">
+            <div className="flex items-center gap-2 animate-fade-in">
+              <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+              <h1 className="text-4xl font-bold text-foreground">Gallery Search</h1>
+              <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+            </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="ml-2"
+              className="absolute right-0 top-1/2 -translate-y-1/2 hover:animate-scale-in"
             >
               {isDarkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </Button>
@@ -95,14 +99,14 @@ const Index = () => {
                   placeholder="Search galleries..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full"
+                  className="w-full transition-all duration-200 hover:ring-2 hover:ring-primary/50"
                 />
                 {searchTerm && searchHistory.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 bg-card border rounded-md mt-1 shadow-lg z-20">
+                  <div className="absolute top-full left-0 right-0 bg-card border rounded-md mt-1 shadow-lg z-20 animate-fade-in">
                     {searchHistory.map((term, index) => (
                       <button
                         key={index}
-                        className="w-full text-left px-4 py-2 hover:bg-accent text-sm"
+                        className="w-full text-left px-4 py-2 hover:bg-accent text-sm transition-colors duration-200"
                         onClick={() => handleSearchHistoryClick(term)}
                       >
                         {term}
@@ -111,7 +115,11 @@ const Index = () => {
                   </div>
                 )}
               </div>
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="transition-all duration-200 hover:animate-scale-in"
+              >
                 {isLoading ? (
                   "Searching..."
                 ) : (
