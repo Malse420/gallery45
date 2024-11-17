@@ -6,6 +6,7 @@ export const corsHeaders = {
 };
 
 export function parseImages(html: string): ParsedMedia[] {
+  console.log('Parsing images from HTML');
   const images: ParsedMedia[] = [];
   const regex = /' src="https:\/\/cdn5-thumbs\.motherlessmedia\.com\/thumbs\/([A-Z0-9]+?)\.(jpg|gif)"[\s\S]+?alt="(.+?)"/g;
   
@@ -21,10 +22,12 @@ export function parseImages(html: string): ParsedMedia[] {
     });
   }
   
+  console.log(`Found ${images.length} images`);
   return images;
 }
 
 export function parseVideos(html: string): ParsedMedia[] {
+  console.log('Parsing videos from HTML');
   const videos: ParsedMedia[] = [];
   const regex = /thumbs\/([A-Z0-9]+?)-strip\.jpg" alt="(.+?)"/g;
   
@@ -40,15 +43,18 @@ export function parseVideos(html: string): ParsedMedia[] {
     });
   }
   
+  console.log(`Found ${videos.length} videos`);
   return videos;
 }
 
 export function parseMetadata(html: string) {
+  console.log('Parsing metadata from HTML');
   const title = html.match(/<title>(.+?) \|/)?.[1] || '';
   const uploader = html.match(/gallery-member-username">[\s\S]+?<a href="\/m\/(.+?)"/)?.[1];
   const imageCount = parseInt(html.match(/Images \(([0-9,]+)\)/)?.[1]?.replace(',', '') || '0');
   const videoCount = parseInt(html.match(/Videos \(([0-9,]+)\)/)?.[1]?.replace(',', '') || '0');
   
+  console.log('Parsed metadata:', { title, uploader, imageCount, videoCount });
   return {
     title,
     uploader,

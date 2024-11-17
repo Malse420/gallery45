@@ -5,8 +5,9 @@ import { GalleryData } from './types.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -19,6 +20,9 @@ serve(async (req) => {
 
     // Fetch the webpage content
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch URL: ${response.statusText}`);
+    }
     const html = await response.text();
 
     // Parse metadata and media
@@ -59,7 +63,7 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: error.status || 500
       }
     );
   }

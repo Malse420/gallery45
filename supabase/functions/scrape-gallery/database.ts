@@ -6,6 +6,8 @@ const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function insertGallery(data: GalleryData) {
+  console.log('Inserting gallery:', { url: data.url, title: data.title });
+  
   const { data: gallery, error: galleryError } = await supabase
     .from('cached_galleries')
     .upsert({
@@ -20,11 +22,18 @@ export async function insertGallery(data: GalleryData) {
     .select('id')
     .single();
 
-  if (galleryError) throw galleryError;
+  if (galleryError) {
+    console.error('Error inserting gallery:', galleryError);
+    throw galleryError;
+  }
+  
+  console.log('Gallery inserted successfully:', gallery.id);
   return gallery;
 }
 
 export async function insertImages(galleryId: string, images: MediaItem[]) {
+  console.log(`Inserting ${images.length} images for gallery ${galleryId}`);
+  
   for (const image of images) {
     const { error } = await supabase
       .from('cached_images')
@@ -39,11 +48,15 @@ export async function insertImages(galleryId: string, images: MediaItem[]) {
         size_bytes: image.sizeBytes
       });
 
-    if (error) console.error('Error inserting image:', error);
+    if (error) {
+      console.error('Error inserting image:', { imageId: image.id, error });
+    }
   }
 }
 
 export async function insertVideos(galleryId: string, videos: MediaItem[]) {
+  console.log(`Inserting ${videos.length} videos for gallery ${galleryId}`);
+  
   for (const video of videos) {
     const { error } = await supabase
       .from('cached_videos')
@@ -59,6 +72,8 @@ export async function insertVideos(galleryId: string, videos: MediaItem[]) {
         size_bytes: video.sizeBytes
       });
 
-    if (error) console.error('Error inserting video:', error);
+    if (error) {
+      console.error('Error inserting video:', { videoId: video.id, error });
+    }
   }
 }
