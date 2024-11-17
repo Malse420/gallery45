@@ -20,17 +20,9 @@ const selectors = {
     title: 'a.title',
     uploader: 'a.plain.uploader',
     thumbnail: 'img.static',
-    duration: 'span',
-    views: 'span.hits',
+    duration: 'span.duration',
+    views: 'span.views',
     link: 'a.title'
-  },
-  images: {
-    container: '.image-item',
-    link: 'a.image-link',
-    title: '.image-title',
-    thumbnail: 'img.image-thumb',
-    views: '.views-count',
-    date: '.upload-date'
   }
 };
 
@@ -48,15 +40,19 @@ serve(async (req) => {
 
     console.log(`Searching for ${type} with query:`, query);
 
-    // Construct the appropriate search URL based on content type
+    // Construct search URL based on content type
+    const encodedQuery = encodeURIComponent(query);
     let searchUrl;
+    
     if (type === 'videos') {
-      searchUrl = `https://motherless.com/term/videos/${encodeURIComponent(query)}?term=${encodeURIComponent(query)}&type=all&range=0&size=0&sort=relevance`;
+      searchUrl = `https://motherless.com/term/videos/${encodedQuery}?term=${encodedQuery}&type=all&range=0&size=0&sort=relevance`;
     } else if (type === 'galleries') {
-      searchUrl = `https://motherless.com/term/galleries/${encodeURIComponent(query)}?term=${encodeURIComponent(query)}&range=0&size=0&sort=relevance`;
+      searchUrl = `https://motherless.com/term/galleries/${encodedQuery}?term=${encodedQuery}&range=0&size=0&sort=relevance`;
     } else {
-      searchUrl = `https://motherless.com/term/${type}?t=${type}&q=${encodeURIComponent(query)}`;
+      throw new Error(`Unsupported search type: ${type}`);
     }
+
+    console.log('Fetching from URL:', searchUrl);
 
     const response = await fetch(searchUrl, {
       headers: {
@@ -76,60 +72,67 @@ serve(async (req) => {
 
     $(typeSelectors.container).each((_, element) => {
       const $el = $(element);
+      
+      // Extract common data
       const $link = $el.find(typeSelectors.link);
       const url = $link.attr('href') || '';
+      const title = type === 'videos' 
+        ? $link.text().trim()
+        : $el.find(typeSelectors.title).text().trim();
       
-      let title;
-      if (type === 'videos') {
-        title = $link.text().trim();
-      } else if (type === 'galleries') {
-        title = $el.find(typeSelectors.title).text().trim();
-      } else {
-        title = $el.find(typeSelectors.title).text().trim();
-      }
+      // Get thumbnail URL (try both src and data-strip-src)
+      const $thumbnail = $el.find(typeSelectors.thumbnail);
+      const thumbnailUrl = $thumbnail.attr('data-strip-src') || $thumbnail.attr('src') || '';
       
-      const thumbnailUrl = $el.find(typeSelectors.thumbnail).attr('src') || 
-                          $el.find(typeSelectors.thumbnail).attr('data-strip-src') || '';
-      
-      let duration;
-      if (type === 'videos') {
-        const durationText = $el.find(typeSelectors.duration).first().text().trim();
+      // Get uploader info
+      const uploader = $el.find(typeSelectors.uploader).text().trim() || 'anonymous';
+
+      if (type === 'galleries') {
+        // Parse gallery-specific data
+        const countsText = $el.find(typeSelectors.counts).text().trim();
+        const videosMatch = countsText.match(/(\d+)\s*videos?/i);
+        const imagesMatch = countsText.match(/(\d+)\s*images?/i);
+        const videoCount = videosMatch ? parseInt(videosMatch[1]) : 0;
+        const imageCount = imagesMatch ? parseInt(imagesMatch[1]) : 0;
+
+        if (url && title) {
+          results.push({
+            id: url.split('/').pop() || '',
+            title,
+            url: url.startsWith('http') ? url : `https://motherless.com${url}`,
+            thumbnailUrl,
+            uploader,
+            videoCount,
+            imageCount
+          });
+        }
+      } else if (type === 'videos') {
+        // Parse video-specific data
+        const durationText = $el.find(typeSelectors.duration).text().trim();
+        let duration;
         if (durationText.includes(':')) {
           const [mins, secs] = durationText.split(':').map(Number);
           duration = mins * 60 + secs;
         }
-      }
 
-      // Parse counts for galleries
-      let videoCount, imageCount;
-      if (type === 'galleries') {
-        const countsText = $el.find(typeSelectors.counts).text().trim();
-        const videosMatch = countsText.match(/(\d+)\s*videos?/i);
-        const imagesMatch = countsText.match(/(\d+)\s*images?/i);
-        videoCount = videosMatch ? parseInt(videosMatch[1]) : 0;
-        imageCount = imagesMatch ? parseInt(imagesMatch[1]) : 0;
-      }
+        const viewsText = $el.find(typeSelectors.views).text().trim();
+        const views = parseInt(viewsText.replace(/[^0-9]/g, '')) || 0;
 
-      const views = parseInt($el.find(typeSelectors.views || '').text().replace(/[^0-9]/g, '')) || undefined;
-      const uploader = type === 'videos' 
-        ? $el.find(typeSelectors.uploader).text().trim() || 'anonymous'
-        : type === 'galleries'
-          ? $el.find(typeSelectors.uploader).text().trim() || 'anonymous'
-          : undefined;
-
-      if (url && title) {
-        results.push({
-          id: url.split('/').pop() || '',
-          title,
-          url: url.startsWith('http') ? url : `https://motherless.com${url}`,
-          thumbnailUrl,
-          duration,
-          views,
-          uploader,
-          ...(type === 'galleries' && { videoCount, imageCount })
-        });
+        if (url && title) {
+          results.push({
+            id: url.split('/').pop() || '',
+            title,
+            url: url.startsWith('http') ? url : `https://motherless.com${url}`,
+            thumbnailUrl,
+            uploader,
+            duration,
+            views
+          });
+        }
       }
     });
+
+    console.log(`Found ${results.length} ${type} results`);
 
     return new Response(
       JSON.stringify({ results }),
