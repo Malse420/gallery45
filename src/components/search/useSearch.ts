@@ -11,6 +11,9 @@ export const useSearch = (query: string) => {
 
       const { data, error } = await supabase.functions.invoke('search-galleries', {
         body: { query: query.trim() },
+        headers: {
+          Authorization: `Bearer ${supabase.auth.getSession()?.access_token}`
+        }
       });
 
       if (error) {

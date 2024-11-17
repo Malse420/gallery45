@@ -15,6 +15,7 @@ interface SearchResult {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,17 +29,22 @@ Deno.serve(async (req) => {
 
     console.log('Processing search query:', query);
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role key
     const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Check if we have recent results cached
-    const { data: cachedResults } = await supabase
+    const { data: cachedResults, error: dbError } = await supabase
       .from('search_results')
       .select('*')
       .eq('query', query)
       .gte('last_fetched', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw dbError;
+    }
 
     if (cachedResults?.length) {
       console.log('Returning cached results');
@@ -47,9 +53,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Perform the search
+    // Perform the search with proper headers
     const searchUrl = `https://motherless.com/search?q=${encodeURIComponent(query)}`;
-    const response = await fetch(searchUrl);
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const html = await response.text();
     const $ = load(html);
 
@@ -78,9 +93,9 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Store results in database
+    // Store results in database using service role key
     if (results.length > 0) {
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('search_results')
         .upsert(
           results.map(result => ({
@@ -90,8 +105,8 @@ Deno.serve(async (req) => {
           }))
         );
 
-      if (error) {
-        console.error('Error storing search results:', error);
+      if (insertError) {
+        console.error('Error storing search results:', insertError);
       }
     }
 
