@@ -53,7 +53,7 @@ serve(async (req) => {
     if (type === 'videos') {
       searchUrl = `https://motherless.com/term/videos/${encodeURIComponent(query)}?term=${encodeURIComponent(query)}&type=all&range=0&size=0&sort=relevance`;
     } else if (type === 'galleries') {
-      searchUrl = `https://motherless.com/GV/${encodeURIComponent(query)}`;
+      searchUrl = `https://motherless.com/term/galleries/${encodeURIComponent(query)}?term=${encodeURIComponent(query)}&range=0&size=0&sort=relevance`;
     } else {
       searchUrl = `https://motherless.com/term/${type}?t=${type}&q=${encodeURIComponent(query)}`;
     }
@@ -78,9 +78,15 @@ serve(async (req) => {
       const $el = $(element);
       const $link = $el.find(typeSelectors.link);
       const url = $link.attr('href') || '';
-      const title = type === 'videos' 
-        ? $link.text().trim()
-        : $el.find(typeSelectors.title).text().trim();
+      
+      let title;
+      if (type === 'videos') {
+        title = $link.text().trim();
+      } else if (type === 'galleries') {
+        title = $el.find(typeSelectors.title).text().trim();
+      } else {
+        title = $el.find(typeSelectors.title).text().trim();
+      }
       
       const thumbnailUrl = $el.find(typeSelectors.thumbnail).attr('src') || 
                           $el.find(typeSelectors.thumbnail).attr('data-strip-src') || '';
@@ -94,10 +100,22 @@ serve(async (req) => {
         }
       }
 
+      // Parse counts for galleries
+      let videoCount, imageCount;
+      if (type === 'galleries') {
+        const countsText = $el.find(typeSelectors.counts).text().trim();
+        const videosMatch = countsText.match(/(\d+)\s*videos?/i);
+        const imagesMatch = countsText.match(/(\d+)\s*images?/i);
+        videoCount = videosMatch ? parseInt(videosMatch[1]) : 0;
+        imageCount = imagesMatch ? parseInt(imagesMatch[1]) : 0;
+      }
+
       const views = parseInt($el.find(typeSelectors.views || '').text().replace(/[^0-9]/g, '')) || undefined;
       const uploader = type === 'videos' 
         ? $el.find(typeSelectors.uploader).text().trim() || 'anonymous'
-        : undefined;
+        : type === 'galleries'
+          ? $el.find(typeSelectors.uploader).text().trim() || 'anonymous'
+          : undefined;
 
       if (url && title) {
         results.push({
@@ -107,7 +125,8 @@ serve(async (req) => {
           thumbnailUrl,
           duration,
           views,
-          uploader
+          uploader,
+          ...(type === 'galleries' && { videoCount, imageCount })
         });
       }
     });
