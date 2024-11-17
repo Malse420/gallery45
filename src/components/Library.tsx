@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FilterSort, { FilterSortOptions } from "./FilterSort";
-import LibraryTabsContent from "./library/LibraryTabsContent";
+import LibraryTabsContent from "./LibraryTabsContent";
 
 const Library = () => {
   const [isExpanded, setIsExpanded] = useState(false);
