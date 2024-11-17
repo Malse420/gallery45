@@ -1,4 +1,4 @@
-import { ParsedMedia } from './types';
+import { ParsedMedia } from './types.ts';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

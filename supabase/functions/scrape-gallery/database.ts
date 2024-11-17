@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { GalleryData, MediaItem } from './types';
+import { GalleryData, MediaItem } from './types.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;

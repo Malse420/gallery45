@@ -1,7 +1,7 @@
-import { corsHeaders } from './parsers';
-import { parseImages, parseVideos, parseMetadata } from './parsers';
-import { insertGallery, insertImages, insertVideos } from './database';
-import { GalleryData } from './types';
+import { corsHeaders } from './parsers.ts';
+import { parseImages, parseVideos, parseMetadata } from './parsers.ts';
+import { insertGallery, insertImages, insertVideos } from './database.ts';
+import { GalleryData } from './types.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
