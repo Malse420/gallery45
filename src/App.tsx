@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import DownloadProgress from "./components/DownloadProgress";
+import Library from "./components/Library";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
       <DownloadProgress />
+      <Library />
     </TooltipProvider>
   </QueryClientProvider>
 );
