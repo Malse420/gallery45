@@ -8,14 +8,13 @@ export interface GalleryFilters {
   minDuration?: number;
   maxDuration?: number;
   searchTerm?: string;
-  page?: number;
+  pageParam?: number;
 }
 
 const ITEMS_PER_PAGE = 20;
 
-export const fetchGalleries = async (filters: GalleryFilters = {}) => {
-  const { page = 1, ...restFilters } = filters;
-  const start = (page - 1) * ITEMS_PER_PAGE;
+export const fetchGalleries = async ({ pageParam = 0, ...filters }: GalleryFilters) => {
+  const start = pageParam * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE - 1;
 
   let query = supabase
@@ -24,26 +23,26 @@ export const fetchGalleries = async (filters: GalleryFilters = {}) => {
     .order('created_at', { ascending: false })
     .range(start, end);
 
-  if (restFilters.minVideos) {
-    query = query.gte('video_count', restFilters.minVideos);
+  if (filters.minVideos) {
+    query = query.gte('video_count', filters.minVideos);
   }
-  if (restFilters.maxVideos) {
-    query = query.lte('video_count', restFilters.maxVideos);
+  if (filters.maxVideos) {
+    query = query.lte('video_count', filters.maxVideos);
   }
-  if (restFilters.minImages) {
-    query = query.gte('image_count', restFilters.minImages);
+  if (filters.minImages) {
+    query = query.gte('image_count', filters.minImages);
   }
-  if (restFilters.maxImages) {
-    query = query.lte('image_count', restFilters.maxImages);
+  if (filters.maxImages) {
+    query = query.lte('image_count', filters.maxImages);
   }
-  if (restFilters.minDuration) {
-    query = query.gte('total_duration', restFilters.minDuration);
+  if (filters.minDuration) {
+    query = query.gte('total_duration', filters.minDuration);
   }
-  if (restFilters.maxDuration) {
-    query = query.lte('total_duration', restFilters.maxDuration);
+  if (filters.maxDuration) {
+    query = query.lte('total_duration', filters.maxDuration);
   }
-  if (restFilters.searchTerm) {
-    query = query.ilike('title', `%${restFilters.searchTerm}%`);
+  if (filters.searchTerm) {
+    query = query.ilike('title', `%${filters.searchTerm}%`);
   }
 
   const { data, error, count } = await query;
@@ -52,8 +51,8 @@ export const fetchGalleries = async (filters: GalleryFilters = {}) => {
   
   return {
     data,
-    pageCount: Math.ceil((count || 0) / ITEMS_PER_PAGE),
-    hasMore: (count || 0) > (page * ITEMS_PER_PAGE)
+    nextPage: (count || 0) > (end + 1) ? pageParam + 1 : undefined,
+    totalCount: count
   };
 };
 

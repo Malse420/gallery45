@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import TabResults from "@/components/TabResults";
 import { FilterSortOptions } from "@/components/FilterSort";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchGalleries, GalleryFilters } from "@/services/galleryService";
 import { useInView } from "react-intersection-observer";
 import debounce from "lodash/debounce";
@@ -15,13 +15,11 @@ import { MoonIcon, SunIcon } from "lucide-react";
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<GalleryFilters>({});
-  const [page, setPage] = useState(1);
   const [searchHistory, setSearchHistory] = useLocalStorage<string[]>("searchHistory", []);
   const [isDarkMode, setIsDarkMode] = useLocalStorage<boolean>("darkMode", false);
   const { toast } = useToast();
   const { ref, inView } = useInView();
 
-  // Toggle dark mode
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -30,27 +28,29 @@ const Index = () => {
     }
   }, [isDarkMode]);
 
-  const { data: galleries = [], isLoading, fetchNextPage, hasNextPage } = useQuery({
-    queryKey: ['galleries', filters, page],
-    queryFn: () => fetchGalleries({ ...filters, page }),
-    keepPreviousData: true,
+  const { 
+    data, 
+    isLoading, 
+    fetchNextPage, 
+    hasNextPage,
+    isFetchingNextPage 
+  } = useInfiniteQuery({
+    queryKey: ['galleries', filters],
+    queryFn: ({ pageParam = 0 }) => fetchGalleries({ ...filters, pageParam }),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0
   });
 
-  // Load more when scrolling to bottom
   useEffect(() => {
-    if (inView && hasNextPage && !isLoading) {
-      setPage(prev => prev + 1);
+    if (inView && hasNextPage && !isLoading && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isLoading]);
+  }, [inView, hasNextPage, isLoading, isFetchingNextPage, fetchNextPage]);
 
-  // Debounced search function
   const debouncedSearch = useCallback(
     debounce((term: string) => {
       if (term.trim()) {
         setFilters(prev => ({ ...prev, searchTerm: term }));
-        setPage(1);
-        // Add to search history
         setSearchHistory(prev => {
           const newHistory = [term, ...prev.filter(h => h !== term)].slice(0, 5);
           return newHistory;
@@ -69,6 +69,8 @@ const Index = () => {
     setSearchTerm(term);
     debouncedSearch(term);
   };
+
+  const galleries = data?.pages.flatMap(page => page.data) ?? [];
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
@@ -142,7 +144,9 @@ const Index = () => {
           }}
           galleries={galleries}
         />
-        <div ref={ref} className="h-10" />
+        {!isLoading && hasNextPage && (
+          <div ref={ref} className="h-10" />
+        )}
       </main>
     </div>
   );
