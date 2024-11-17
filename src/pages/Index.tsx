@@ -6,6 +6,7 @@ import TabResults from "@/components/TabResults";
 import Statistics from "@/components/Statistics";
 import { FilterSortOptions } from "@/components/FilterSort";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { debounce } from "lodash";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
