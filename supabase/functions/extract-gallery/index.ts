@@ -7,57 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-class MotherlessExtractor {
-  private url: string;
-
-  constructor(url: string) {
-    this.url = url;
-  }
-
-  async extract() {
-    console.log('Extracting data from:', this.url);
-    
-    const response = await fetch(this.url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
-    }
-
-    const html = await response.text();
-    const $ = load(html);
-
-    // Extract gallery data
-    const title = $('title').text().split('|')[0]?.trim() || '';
-    const description = $('.gallery-description').text().trim();
-    const thumbnailUrl = $('.media-thumb img').first().attr('src') || '';
-    
-    // Parse counts
-    const countText = $('.media-counts').text();
-    const imageCounts = countText.match(/(\d+(?:,\d+)*)\s*Images?/i);
-    const videoCounts = countText.match(/(\d+(?:,\d+)*)\s*Videos?/i);
-    
-    const imageCount = imageCounts ? parseInt(imageCounts[1].replace(/,/g, '')) : 0;
-    const videoCount = videoCounts ? parseInt(videoCounts[1].replace(/,/g, '')) : 0;
-
-    // Extract gallery ID from URL
-    const id = this.url.split('/').pop() || '';
-
-    return {
-      id,
-      url: this.url,
-      title,
-      description,
-      thumbnailUrl,
-      videoCount,
-      imageCount
-    };
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -72,9 +21,37 @@ serve(async (req) => {
 
     console.log('Extracting gallery data from:', url);
 
-    // Initialize the extractor
-    const extractor = new MotherlessExtractor(url);
-    const data = await extractor.extract();
+    // Fetch the gallery page
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
+    }
+
+    const html = await response.text();
+    const $ = load(html);
+
+    // Extract gallery metadata
+    const title = $('title').text().split('|')[0]?.trim() || '';
+    const description = $('.gallery-description').text().trim();
+    const uploader = $('.gallery-member-username a').first().text().trim();
+    
+    // Extract counts
+    const countText = $('.media-counts').text();
+    const videoCounts = countText.match(/(\d+)\s*videos?/i);
+    const imageCounts = countText.match(/(\d+)\s*images?/i);
+    const videoCount = videoCounts ? parseInt(videoCounts[1]) : 0;
+    const imageCount = imageCounts ? parseInt(imageCounts[1]) : 0;
+
+    // Extract thumbnail
+    const thumbnailUrl = $('.media-thumb img').first().attr('src') || '';
+
+    // Extract gallery ID from URL
+    const galleryId = url.split('/').pop() || '';
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
@@ -82,26 +59,41 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Store the gallery data
-    const { error: insertError } = await supabase
+    const { data: gallery, error: insertError } = await supabase
       .from('cached_galleries')
       .upsert({
-        external_gallery_id: data.id,
-        url: data.url,
-        title: data.title,
-        content: data.description,
-        thumbnail_url: data.thumbnailUrl,
-        video_count: data.videoCount,
-        image_count: data.imageCount,
-        last_fetched: new Date().toISOString()
-      });
+        external_gallery_id: galleryId,
+        url,
+        title,
+        content: description,
+        thumbnail_url: thumbnailUrl,
+        video_count: videoCount,
+        image_count: imageCount,
+      })
+      .select()
+      .single();
 
     if (insertError) {
       console.error('Error storing gallery data:', insertError);
       throw insertError;
     }
 
+    // Initiate download by calling the download function
+    const { error: downloadError } = await supabase.functions.invoke('download-gallery', {
+      body: { galleryId: gallery.id }
+    });
+
+    if (downloadError) {
+      console.error('Error initiating download:', downloadError);
+      throw downloadError;
+    }
+
     return new Response(
-      JSON.stringify({ success: true, data }),
+      JSON.stringify({ 
+        success: true, 
+        data: gallery,
+        message: 'Gallery extracted and download initiated'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

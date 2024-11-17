@@ -1,10 +1,13 @@
 project_id = "mbkvzgohhfodxfubejgd"
 
-[global.env]
-SUPABASE_URL = "env(SUPABASE_URL)"
-SUPABASE_ANON_KEY = "env(SUPABASE_ANON_KEY)"
-SUPABASE_SERVICE_ROLE_KEY = "env(SUPABASE_SERVICE_ROLE_KEY)"
+[functions.extract-gallery]
+verify_jwt = false
 
-[[functions]]
-name = "search-content"
+[functions.download-gallery]
+verify_jwt = false
+
+[functions.progress]
+verify_jwt = false
+
+[functions.search-content]
 verify_jwt = false
