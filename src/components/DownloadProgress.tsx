@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DownloadStatus {
   id: string;
@@ -17,11 +18,21 @@ const DownloadProgress = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    const pollProgress = setInterval(() => {
-      fetch("/api/progress")
-        .then((res) => res.json())
-        .then((data) => setDownloads(data))
-        .catch(console.error);
+    const pollProgress = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('progress', {
+          method: 'GET'
+        });
+        
+        if (error) {
+          console.error('Error fetching progress:', error);
+          return;
+        }
+        
+        setDownloads(data || []);
+      } catch (err) {
+        console.error('Error polling progress:', err);
+      }
     }, 1000);
 
     return () => clearInterval(pollProgress);
