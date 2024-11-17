@@ -1,8 +1,8 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from './parsers.ts';
-import { parseImages, parseVideos, parseMetadata, parseWithPuppeteer } from './parsers.ts';
+import { parseImages, parseVideos, parseMetadata, parseWithFetch } from './parsers.ts';
 import { insertGallery, insertImages, insertVideos } from './database.ts';
 import { GalleryData } from './types.ts';
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,8 +17,8 @@ serve(async (req) => {
 
     console.log('Scraping URL:', url);
 
-    // Use Puppeteer for dynamic content
-    const html = await parseWithPuppeteer(url);
+    // Use fetch-based parsing instead of Puppeteer
+    const html = await parseWithFetch(url);
 
     // Enhanced parsing with better error handling
     const [metadata, images, videos] = await Promise.all([
@@ -36,7 +36,7 @@ serve(async (req) => {
       }),
     ]);
 
-    // Prepare gallery data with enhanced metadata
+    // Prepare gallery data
     const galleryData: GalleryData = {
       externalId: url.split('/').pop() || '',
       url,
