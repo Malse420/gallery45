@@ -1,21 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { load } from 'https://esm.sh/cheerio@1.0.0-rc.12';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface SearchResult {
-  id: string;
-  title: string;
-  url: string;
-  thumbnailUrl?: string;
-  duration?: number;
-  views?: number;
-  uploadDate?: string;
-}
 
 const selectors = {
   galleries: {
@@ -27,13 +16,13 @@ const selectors = {
     link: 'a'
   },
   videos: {
-    container: '.video-item',
-    link: 'a.video-link',
-    title: '.video-title',
-    thumbnail: 'img.video-thumb',
-    duration: '.duration',
-    views: '.views-count',
-    date: '.upload-date'
+    container: 'div.mobile-thumb.video',
+    title: 'a.title',
+    uploader: 'a.plain.uploader',
+    thumbnail: 'img.static',
+    duration: 'span',
+    views: 'span.hits',
+    link: 'a.title'
   },
   images: {
     container: '.image-item',
@@ -59,8 +48,16 @@ serve(async (req) => {
 
     console.log(`Searching for ${type} with query:`, query);
 
-    const searchUrl = `https://motherless.com/search?q=${encodeURIComponent(query)}&t=${type}`;
-    
+    // Construct the appropriate search URL based on content type
+    let searchUrl;
+    if (type === 'videos') {
+      searchUrl = `https://motherless.com/term/videos/${encodeURIComponent(query)}?term=${encodeURIComponent(query)}&type=all&range=0&size=0&sort=relevance`;
+    } else if (type === 'galleries') {
+      searchUrl = `https://motherless.com/GV/${encodeURIComponent(query)}`;
+    } else {
+      searchUrl = `https://motherless.com/term/${type}?t=${type}&q=${encodeURIComponent(query)}`;
+    }
+
     const response = await fetch(searchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -73,7 +70,7 @@ serve(async (req) => {
 
     const html = await response.text();
     const $ = load(html);
-    const results: SearchResult[] = [];
+    const results = [];
 
     const typeSelectors = selectors[type as keyof typeof selectors];
 
@@ -81,23 +78,26 @@ serve(async (req) => {
       const $el = $(element);
       const $link = $el.find(typeSelectors.link);
       const url = $link.attr('href') || '';
-      const title = $el.find(typeSelectors.title).text().trim() || 
-                   $el.find(typeSelectors.thumbnail).attr('alt') || '';
-      const thumbnailUrl = $el.find(typeSelectors.thumbnail).attr('src') || '';
+      const title = type === 'videos' 
+        ? $link.text().trim()
+        : $el.find(typeSelectors.title).text().trim();
+      
+      const thumbnailUrl = $el.find(typeSelectors.thumbnail).attr('src') || 
+                          $el.find(typeSelectors.thumbnail).attr('data-strip-src') || '';
       
       let duration;
-      if (type === 'videos' && typeSelectors.duration) {
-        const durationText = $el.find(typeSelectors.duration).text().trim();
-        if (durationText) {
+      if (type === 'videos') {
+        const durationText = $el.find(typeSelectors.duration).first().text().trim();
+        if (durationText.includes(':')) {
           const [mins, secs] = durationText.split(':').map(Number);
           duration = mins * 60 + secs;
         }
       }
 
       const views = parseInt($el.find(typeSelectors.views || '').text().replace(/[^0-9]/g, '')) || undefined;
-      const uploadDate = type === 'galleries' 
-        ? $el.find(typeSelectors.uploader || '').text().trim() || undefined
-        : $el.find(typeSelectors.date || '').text().trim() || undefined;
+      const uploader = type === 'videos' 
+        ? $el.find(typeSelectors.uploader).text().trim() || 'anonymous'
+        : undefined;
 
       if (url && title) {
         results.push({
@@ -107,27 +107,10 @@ serve(async (req) => {
           thumbnailUrl,
           duration,
           views,
-          uploadDate
+          uploader
         });
       }
     });
-
-    // Store results in Supabase for caching
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    if (results.length > 0) {
-      await supabase
-        .from('search_results')
-        .upsert(
-          results.map(result => ({
-            query,
-            ...result,
-            last_fetched: new Date().toISOString(),
-          }))
-        );
-    }
 
     return new Response(
       JSON.stringify({ results }),
